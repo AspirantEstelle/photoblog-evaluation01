@@ -1,0 +1,3 @@
+
+PASS: cache device integration and genuine screenshots
+

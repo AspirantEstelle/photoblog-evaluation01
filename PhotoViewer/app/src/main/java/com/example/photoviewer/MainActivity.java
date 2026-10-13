@@ -182,7 +182,8 @@ public class MainActivity extends Activity {
         ScrollView scroll = new ScrollView(this); scroll.addView(box);
         editor = new AlertDialog.Builder(this).setTitle("새 사진 올리기").setView(scroll)
             .setNegativeButton("닫기",null).setPositiveButton("업로드",null).create();
-        editor.setOnDismissListener(d -> prefs.edit().putString("draft-title",titleInput.getText().toString()).putString("draft-body",bodyInput.getText().toString()).apply());
+        final EditText draftTitle = titleInput, draftBody = bodyInput;
+        editor.setOnDismissListener(d -> prefs.edit().putString("draft-title",draftTitle.getText().toString()).putString("draft-body",draftBody.getText().toString()).apply());
         editor.setOnShowListener(d -> editor.getButton(-1).setOnClickListener(v -> upload()));
         editor.show();
     }

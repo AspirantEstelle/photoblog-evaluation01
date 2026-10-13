@@ -1,0 +1,3 @@
+
+PASS: socket device integration and genuine screenshots
+

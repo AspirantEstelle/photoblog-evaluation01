@@ -62,6 +62,7 @@ public class EvidenceRunner extends Instrumentation {
                     });
                     pause();capture("upload-form");
                     runOnMainSync(()->{try{((AlertDialog)field("editor")).getButton(-2).performClick();}catch(Exception e){throw new RuntimeException(e);}});
+                    waitForIdleSync();
                     runOnMainSync(()->activity.findViewById(R.id.upload).performClick());
                     check(((EditText)field("titleInput")).getText().toString().contains("Android"),"Draft restored");
                     capture("draft-restored");
