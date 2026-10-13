@@ -31,7 +31,7 @@ public class MainActivity extends Activity {
     private EditText search, titleInput, bodyInput;
     private ImageView preview;
     private Uri selectedImage;
-    private AlertDialog editor;
+    private AlertDialog editor, settingsDialog;
     private PostAdapter adapter;
     private boolean busy;
     private int generation;
@@ -65,6 +65,7 @@ public class MainActivity extends Activity {
             public void afterTextChanged(Editable e){}
         });
         loadCache();
+        if(state != null && state.getBoolean("editor-open")) showEditor();
     }
 
     private int dp(int n) { return (int)(n * getResources().getDisplayMetrics().density); }
@@ -108,7 +109,7 @@ public class MainActivity extends Activity {
         });
     }
     public void synchronize() {
-        if(busy)return;
+        if(busy || isDestroyed() || isFinishing())return;
         final String server = base; final int request = ++generation;
         setBusy(true, "서버에서 사진을 불러오는 중…");
         io.execute(() -> {
@@ -149,18 +150,25 @@ public class MainActivity extends Activity {
         Button local = new Button(this); local.setText("로컬"); local.setOnClickListener(v->url.setText(LOCAL)); presets.addView(local);
         Button cloud = new Button(this); cloud.setText("클라우드"); cloud.setOnClickListener(v->url.setText(CLOUD)); presets.addView(cloud); box.addView(presets);
         EditText token = input(box,"API 토큰 (글 작성 시 필요)",prefs.getString(tokenKey(),""),true);
-        new AlertDialog.Builder(this).setTitle("연결 설정").setView(box).setNegativeButton("취소",null)
+        url.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s,int start,int count,int after){}
+            public void onTextChanged(CharSequence s,int start,int before,int count){
+                String server = s.toString().trim().replaceAll("/+$", "");
+                token.setText(prefs.getString("token-" + hash(server), ""));
+            }
+            public void afterTextChanged(Editable e){}
+        });
+        settingsDialog = new AlertDialog.Builder(this).setTitle("연결 설정").setView(box).setNegativeButton("취소",null)
         .setPositiveButton("저장",(d,w)->{
             String server = url.getText().toString().trim().replaceAll("/+$","");
             try {
                 URI uri = new URI(server);
                 boolean valid = "https".equals(uri.getScheme()) || ("http".equals(uri.getScheme()) && Arrays.asList("10.0.2.2","127.0.0.1","localhost").contains(uri.getHost()));
                 if(!valid || uri.getHost()==null || uri.getUserInfo()!=null || uri.getQuery()!=null || uri.getFragment()!=null || !uri.getPath().isEmpty()) throw new Exception();
-                // Never copy a local credential to another server implicitly.
+                // The URL listener loads only the selected server's credential.
                 String entered = token.getText().toString().trim();
-                String previous = prefs.getString(tokenKey(),"");
                 base = server; prefs.edit().putString("server",base).apply();
-                if(!entered.equals(previous)) prefs.edit().putString(tokenKey(),entered).apply();
+                prefs.edit().putString(tokenKey(),entered).apply();
                 serverLabel.setText(base); ++generation; all.clear(); filter();
                 status.setText("설정 저장 완료 · 동기화를 눌러주세요."); loadCache();
             } catch(Exception e) {Toast.makeText(this,"올바른 HTTPS 서버 주소를 입력하세요.",Toast.LENGTH_LONG).show();}
@@ -219,10 +227,11 @@ public class MainActivity extends Activity {
                 out.write(bytes); out.write(("\r\n--"+boundary+"--\r\n").getBytes(StandardCharsets.UTF_8));
                 request("POST",server+"/api_root/Post/",out.toByteArray(),"multipart/form-data; boundary="+boundary,token);
                 runOnUiThread(()->{
+                    if(isDestroyed() || isFinishing())return;
                     titleInput.setText("");bodyInput.setText("");selectedImage=null;editor.dismiss();
                     setBusy(false,"업로드 완료");synchronize();
                 });
-            } catch(Exception e) {runOnUiThread(()->{setBusy(false,"업로드 실패 · 입력 내용이 보존돼요.");editor.getButton(-1).setEnabled(true);Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();});}
+            } catch(Exception e) {runOnUiThread(()->{if(isDestroyed() || isFinishing())return;setBusy(false,"업로드 실패 · 입력 내용이 보존돼요.");editor.getButton(-1).setEnabled(true);Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();});}
         });
     }
     private static void field(OutputStream out,String boundary,String name,String value)throws IOException{
@@ -267,8 +276,8 @@ public class MainActivity extends Activity {
                 BitmapFactory.decodeByteArray(bytes,0,bytes.length,opts);opts.inSampleSize=1;
                 while(opts.outWidth/opts.inSampleSize>1200 || opts.outHeight/opts.inSampleSize>1200)opts.inSampleSize*=2;
                 opts.inJustDecodeBounds=false;Bitmap bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.length,opts);
-                runOnUiThread(()->{if(url.equals(view.getTag()))view.setImageBitmap(bitmap);});
-            }catch(Exception ignored){runOnUiThread(()->{if(url.equals(view.getTag()))view.setContentDescription("이미지를 불러오지 못했어요.");});}
+                runOnUiThread(()->{if(!isDestroyed() && url.equals(view.getTag()))view.setImageBitmap(bitmap);});
+            }catch(Exception ignored){runOnUiThread(()->{if(!isDestroyed() && url.equals(view.getTag()))view.setContentDescription("이미지를 불러오지 못했어요.");});}
         });
     }
     private void detail(JSONObject post) {
@@ -296,6 +305,19 @@ public class MainActivity extends Activity {
         ImageView photo;TextView title,text;
         PostHolder(View view,ImageView photo,TextView title,TextView text){super(view);this.photo=photo;this.title=title;this.text=text;}
     }
-    @Override protected void onDestroy(){++generation;io.shutdownNow();super.onDestroy();}
+    private void saveDraft() {
+        if(editor!=null && editor.isShowing()) prefs.edit().putString("draft-title",titleInput.getText().toString())
+            .putString("draft-body",bodyInput.getText().toString()).apply();
+    }
+    @Override protected void onPause(){saveDraft();super.onPause();}
+    @Override protected void onSaveInstanceState(Bundle state){
+        saveDraft();state.putBoolean("editor-open",editor!=null && editor.isShowing());super.onSaveInstanceState(state);
+    }
+    @Override protected void onDestroy(){
+        ++generation;
+        if(editor!=null)editor.dismiss();
+        if(settingsDialog!=null)settingsDialog.dismiss();
+        io.shutdownNow();super.onDestroy();
+    }
 }
 

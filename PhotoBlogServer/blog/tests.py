@@ -84,7 +84,7 @@ class PhotoBlogTests(TestCase):
 
     def test_oversized_and_unsupported_image(self):
         from .serializers import PostSerializer
-        from rest_framework.exceptions import ValidationError
+        from django.core.exceptions import ValidationError
         large = picture()
         large.size = 6 * 1024 * 1024
         with self.assertRaises(ValidationError):
@@ -95,6 +95,27 @@ class PhotoBlogTests(TestCase):
         result = self.api.post('/api_root/Post/', {'title': 'bmp', 'text': 'x',
                  'image': SimpleUploadedFile('a.bmp', data.getvalue(), content_type='image/bmp')})
         self.assertEqual(result.status_code, 400)
+
+    def test_real_oversized_upload_rejected_by_web_and_api(self):
+        self.login_api()
+        self.client.force_login(self.owner)
+        payload = picture().read() + b'\0' * (5 * 1024 * 1024)
+        for client, url in [(self.api, '/api_root/Post/'), (self.client, '/post/new/')]:
+            with self.subTest(url=url):
+                response = client.post(url, {'title': 'large', 'text': '본문',
+                    'image': SimpleUploadedFile('large.png', payload, content_type='image/png')})
+                self.assertEqual(response.status_code, 400 if client is self.api else 200)
+                self.assertContains(response, '5 MB', status_code=response.status_code)
+        self.assertEqual(Post.objects.count(), 1)
+
+    def test_web_rejects_image_format_the_app_cannot_display(self):
+        self.client.force_login(self.owner)
+        data = io.BytesIO()
+        Image.new('RGB', (8, 8)).save(data, 'BMP')
+        response = self.client.post('/post/new/', {'title': 'bmp', 'text': '본문',
+            'image': SimpleUploadedFile('photo.bmp', data.getvalue(), content_type='image/bmp')})
+        self.assertContains(response, 'JPG, PNG, GIF, WEBP')
+        self.assertEqual(Post.objects.count(), 1)
 
     def test_owner_can_update_and_delete(self):
         self.login_api()
