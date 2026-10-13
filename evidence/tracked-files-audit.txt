@@ -1,0 +1,1 @@
+PASS: no private runtime files or current private credentials tracked; captured socket bytes unchanged; report archive and identity valid

@@ -1,0 +1,1 @@
+PASS: fresh device integration and genuine screenshots

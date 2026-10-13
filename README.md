@@ -63,7 +63,7 @@ python manage.py runserver 127.0.0.1:8000
 | DELETE `/api_root/Post/{id}/` | 소유자/관리자 삭제 | 204 |
 | POST `/api-token-auth/` | username, password로 토큰 획득 | 200 / 400 |
 
-읽기는 공개하고 작성은 `Authorization: Token <token>` 또는 로그인 세션과 CSRF 검증이 필요하다. author는 로그인한 사용자로 서버가 지정하므로 다른 작성자를 지정할 수 없다. 예전 과제 예문의 JWT 문자열을 이 프로젝트에서 재사용하지 않는다. JPEG/PNG/GIF/WebP, 최대 5MB만 API에서 받는다.
+읽기는 공개하고 작성은 `Authorization: Token <token>` 또는 로그인 세션과 CSRF 검증이 필요하다. author는 로그인한 사용자로 서버가 지정하므로 다른 작성자를 지정할 수 없다. 예전 과제 예문의 JWT 문자열을 이 프로젝트에서 재사용하지 않는다. JPEG/PNG/GIF/WebP, 최대 5MB만 웹과 API에서 받는다.
 
 ```sh
 curl -X POST http://127.0.0.1:8000/api_root/Post/ \
@@ -85,7 +85,7 @@ python -m coverage html
 python tools/verify_api.py
 ```
 
-서버 15개 테스트가 통과했다. 측정 대상 `blog`의 실행문 98개와 분기 12개는 100% 실행됐다. 이는 `.coveragerc`에 지정한 범위로, 테스트 자체·마이그레이션·초기 데이터 명령과 Android 코드는 이 비율에 포함하지 않는다. 정상 응답, 한글 multipart 업로드, 잘못된 이미지/용량 제한, 작성자 위조, 무인증 작성, 소유권, 수정·삭제, 웹 폼을 검사한다.
+서버 17개 테스트가 통과했다. 측정 대상 `blog`의 실행문 109개와 분기 14개는 100% 실행됐다. 이는 `.coveragerc`에 지정한 범위로, 테스트 자체·마이그레이션·초기 데이터 명령과 Android 코드는 이 비율에 포함하지 않는다. 정상 응답, 한글 multipart 업로드, 잘못된 이미지/용량 제한, 작성자 위조, 무인증 작성, 소유권, 수정·삭제, 웹 폼을 검사한다.
 
 Android 기기 테스트 소스는 `app/src/androidTest/.../EvidenceRunner.java`에 있다. 실제 앱을 실행해 동기화, 검색, 상세 표시, 초안 복원, multipart 업로드와 업로드 후 새 목록을 검증한다. 이미지 선택 결과 URI를 테스트 코드가 주입하고, 이후 서버 요청은 실제 운영 코드가 수행한다. 스크린샷은 에뮬레이터 UiAutomation의 실제 화면이다. 로컬·클라우드·캐시 복원·소켓 연동 테스트 기록은 `evidence/`에 있다.
 
@@ -113,3 +113,11 @@ Python 3.13 가상환경 `/home/Gyusik/my-first-blog/.venv`의 호환 라이브�
 수정 후 서버 폴더에서 `git pull`, `python manage.py migrate`, `python manage.py collectstatic --noinput`을 실행하고 Web 탭의 Reload로 적용한다. 무료 사이트의 유지 기간은 PythonAnywhere Web 탭에서 확인하고 갱신한다.
 
 참고: [교재 예비 코드](https://github.com/kiokahn/web_blog), [DRF 테스트](https://www.django-rest-framework.org/api-guide/testing/), [Android 문서 선택기](https://developer.android.com/training/data-storage/shared/documents-files), [PythonAnywhere 배포](https://help.pythonanywhere.com/pages/DeployExistingDjangoProject/).
+
+## 제출 전 재점검
+
+2026년 10월 13일 재점검에서 누락된 이미지 경로 migration, 웹과 API 사이의 이미지 제한 불일치, Android 네트워크 설정 오류, 서버 전환 시 토큰 표시와 화면 재생성 처리를 수정했다. 서버 17개 테스트와 새 DB 초기화, Android 빌드 및 실제 기기 경계 상황 검사를 통과했다. Lint는 오류 0개이며 문자열 리소스·SDK 갱신·UI 스타일 등의 권고 경고 18개가 남는다. 현재 제출용 APK 실행을 막는 오류는 아니다.
+
+기기 추가 검사는 서버별 토큰 선택과 삭제, 회전 후 초안 복원, 지연된 업로드 응답 도착 시 화면 재생성을 다룬다. 지연 응답 검사는 에뮬레이터 내부의 테스트 HTTP 서버를 사용하며, 실제 Django 업로드는 별도의 새 DB 서버에서도 검증했다. 검사 기록은 evidence/android-audit-test.txt, android-clean-install-test.txt, clean-install.txt, android-lint.txt에 있다.
+
+PythonAnywhere 무료 사이트는 2026년 11월 13일까지 유지하도록 갱신했다. 그 이후에도 채점이나 시연이 필요하면 Web 탭에서 무료 유지 기간을 다시 갱신한다. 주소 표시줄 캡처 2장의 보완 사항은 여전히 남아 있다.
