@@ -27,7 +27,7 @@ with socket.socket() as server:
             raise ValueError('Only anonymous GET requests may be recorded')
         filename = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '.bin'
         (out / filename).write_bytes(request)
-        (out / 'android-request.txt').write_text(request.decode('iso-8859-1'), encoding='utf-8')
+        (out / 'android-request.txt').write_text(request.decode('iso-8859-1').replace('\r\n', '\n'), encoding='utf-8')
         with socket.create_connection(('127.0.0.1', 8000), timeout=15) as django:
             forwarded = request.replace(b'Host: 10.0.2.2:8001', b'Host: 10.0.2.2:8000')
             forwarded = forwarded.replace(b'Connection: Keep-Alive', b'Connection: close')
