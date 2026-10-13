@@ -31,7 +31,12 @@ public class EvidenceRunner extends Instrumentation {
             activity=(MainActivity)startActivitySync(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             pause();
             capture(mode+"-initial");
-            if(mode.equals("cache")) {
+            if(mode.equals("settings")) {
+                runOnMainSync(()->activity.findViewById(R.id.settings).performClick());
+                pause();
+                capture("settings");
+                sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+            } else if(mode.equals("cache")) {
                 check(status().contains("보관한 사진"),"Cache restored after process restart");
                 capture("offline-cache");
             } else {

@@ -137,6 +137,7 @@ public class MainActivity extends Activity {
     private EditText input(LinearLayout box, String hint, String value, boolean password) {
         EditText item = new EditText(this); item.setHint(hint); item.setText(value);
         item.setInputType(password ? 129 : 1); item.setSingleLine(!hint.contains("본문"));
+        if (password) item.setTransformationMethod(android.text.method.PasswordTransformationMethod.getInstance());
         box.addView(item, new LinearLayout.LayoutParams(-1,-2)); return item;
     }
     private String tokenKey() { return "token-" + hash(base); }
