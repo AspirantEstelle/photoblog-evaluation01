@@ -26,8 +26,8 @@ class Command(BaseCommand):
                                                'token': token.key}), encoding='utf-8')
             credentials.chmod(0o600)
         if not Post.objects.filter(author=user).exists():
-            with (settings.BASE_DIR / 'samples' / 'pig.png').open('rb') as image:
+            with (settings.BASE_DIR / 'samples' / 'cat_annoyed.png').open('rb') as image:
                 Post.objects.create(author=user, title='PhotoBlog 첫 번째 사진',
                                     text='Django API와 Android PhotoViewer의 이미지 동기화 실습입니다.',
-                                    published_date=timezone.now(), image=File(image, name='pig.png'))
+                                    published_date=timezone.now(), image=File(image, name='cat_annoyed.png'))
         self.stdout.write(self.style.SUCCESS('Demo data ready. Credentials are in the ignored private file.'))

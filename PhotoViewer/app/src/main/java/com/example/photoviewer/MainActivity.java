@@ -282,7 +282,7 @@ public class MainActivity extends Activity {
         public PostHolder onCreateViewHolder(android.view.ViewGroup parent,int type){
             LinearLayout box=column();box.setBackgroundColor(0xffffffff);
             RecyclerView.LayoutParams params=new RecyclerView.LayoutParams(-1,-2);params.bottomMargin=dp(12);box.setLayoutParams(params);
-            ImageView image=new ImageView(MainActivity.this);image.setScaleType(ImageView.ScaleType.CENTER_CROP);box.addView(image,new LinearLayout.LayoutParams(-1,dp(190)));
+            ImageView image=new ImageView(MainActivity.this);image.setScaleType(ImageView.ScaleType.FIT_CENTER);box.addView(image,new LinearLayout.LayoutParams(-1,dp(190)));
             TextView title=new TextView(MainActivity.this);title.setTextSize(19);title.setTextColor(0xff17263d);title.setPadding(0,dp(10),0,dp(5));box.addView(title);
             TextView text=new TextView(MainActivity.this);text.setMaxLines(2);text.setTextColor(0xff536680);box.addView(text);
             return new PostHolder(box,image,title,text);

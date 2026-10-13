@@ -56,13 +56,13 @@ public class EvidenceRunner extends Instrumentation {
                     pause();
                     ContentValues values=new ContentValues();values.put(MediaStore.Images.Media.DISPLAY_NAME,"photoviewer-test.png");values.put(MediaStore.Images.Media.MIME_TYPE,"image/png");
                     Uri uri=context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);
-                    try(InputStream in=getContext().getAssets().open("pig.png");OutputStream out=context.getContentResolver().openOutputStream(uri)) {in.transferTo(out);}
+                    try(InputStream in=getContext().getAssets().open("cat_what.png");OutputStream out=context.getContentResolver().openOutputStream(uri)) {in.transferTo(out);}
                     // Inject the Android picker result; upload itself uses the production multipart path.
                     runOnMainSync(()->{
                         activity.onActivityResult(100,Activity.RESULT_OK,new Intent().setData(uri));
                         try {
-                            ((EditText)field("titleInput")).setText("Android에서 올린 사진");
-                            ((EditText)field("bodyInput")).setText("제목과 본문을 입력하고 사진을 골라 multipart POST로 업로드했습니다.");
+                            ((EditText)field("titleInput")).setText("Android에서 올린 고양이");
+                            ((EditText)field("bodyInput")).setText("뭐여 고양이 사진을 선택하고 multipart POST로 업로드했습니다.");
                         }catch(Exception e){throw new RuntimeException(e);}
                     });
                     pause();capture("upload-form");

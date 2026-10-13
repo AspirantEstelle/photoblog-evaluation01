@@ -68,7 +68,7 @@ curl -X POST http://127.0.0.1:8000/api_root/Post/ \
   -H "Authorization: Token <본인의 토큰>" \
   -H "Accept: application/json" \
   -F "title=새 사진" -F "text=이미지 업로드 실습" \
-  -F "image=@samples/pig.png;type=image/png"
+  -F "image=@samples/cat_annoyed.png;type=image/png"
 ```
 
 Windows PowerShell에서는 `curl.exe`를 사용하고 줄바꿈 없이 한 줄로 입력할 수 있다.
