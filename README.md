@@ -23,6 +23,8 @@ ROOT/
 
 ## 서버 실행
 
+실습 사진은 제공받은 `icon_5.png`와 `뭐여.png`를 변경 없이 사용했다. 서버의 `samples/cat_annoyed.png`, `samples/cat_what.png`와 Android 테스트 자산에 포함했다. 웹과 앱 목록은 그림 전체가 보이도록 표시한다. 기존 실습 DB의 `photo_demo` 예제 사진은 `python manage.py refresh_demo_images`로 교체할 수 있다. 2026년 10월 13일 고양이 사진으로 업로드·동기화·캐시·소켓 테스트와 보고서 캡처를 다시 실행했다.
+
 Python 3.12 이상이 필요하다. 검증 환경은 로컬 Python 3.14, 클라우드 Python 3.13이다.
 
 ```sh
