@@ -1,0 +1,26 @@
+[
+  {
+    "check": "HTTPS API returns JSON array",
+    "passed": true
+  },
+  {
+    "check": "Image uses HTTPS",
+    "passed": true
+  },
+  {
+    "check": "Deployed sample matches supplied cat artwork",
+    "passed": true
+  },
+  {
+    "check": "Deployed blog displays complete image",
+    "passed": true
+  },
+  {
+    "check": "Anonymous write rejected",
+    "passed": true
+  },
+  {
+    "check": "Admin requires login",
+    "passed": true
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": 3,
+    "author": 1,
+    "author_name": "photo_demo",
+    "title": "Android에서 올린 고양이",
+    "text": "뭐여 고양이 사진을 선택하고 multipart POST로 업로드했습니다.",
+    "created_date": "2026-10-20T15:04:44.174370+09:00",
+    "published_date": "2026-10-20T15:04:44.174123+09:00",
+    "image": "http://127.0.0.1:8000/media/images/2026/10/20/upload.png"
+  },
+  {
+    "id": 2,
+    "author": 1,
+    "author_name": "photo_demo",
+    "title": "API 재검증 2026-10-20",
+    "text": "브라우저 API 폼에서 고양이 PNG를 선택해 게시글을 작성했습니다.",
+    "created_date": "2026-10-20T13:38:16.109275+09:00",
+    "published_date": "2026-10-20T13:38:16.109039+09:00",
+    "image": "http://127.0.0.1:8000/media/images/2026/10/20/cat_annoyed_MCC4P9e.png"
+  },
+  {
+    "id": 1,
+    "author": 1,
+    "author_name": "photo_demo",
+    "title": "PhotoBlog 첫 번째 사진",
+    "text": "Django API와 Android PhotoViewer의 이미지 동기화 실습입니다.",
+    "created_date": "2026-10-20T13:32:56.020870+09:00",
+    "published_date": "2026-10-20T13:32:56.020634+09:00",
+    "image": "http://127.0.0.1:8000/media/images/2026/10/20/cat_annoyed.png"
+  }
+]

@@ -20,6 +20,7 @@ import java.util.concurrent.*;
 public class EvidenceRunner extends Instrumentation {
     private Bundle args;
     private MainActivity activity;
+    private final StringBuilder checks=new StringBuilder();
     @Override public void onCreate(Bundle args) { super.onCreate(args); this.args=args;start(); }
     @Override public void onStart() {
         Bundle result=new Bundle();
@@ -34,6 +35,10 @@ public class EvidenceRunner extends Instrumentation {
             activity=(MainActivity)startActivitySync(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             pause();
             capture(mode+"-initial");
+            if(mode.equals("fresh")) {
+                check(status().contains("동기화를 눌러"),"Fresh start presents the synchronization instruction");
+                check(((java.util.List<?>)field("all")).isEmpty(),"Fresh start has no downloaded posts");
+            }
             if(mode.equals("audit")) {
                 audit(context);
             } else if(mode.equals("settings")) {
@@ -43,28 +48,52 @@ public class EvidenceRunner extends Instrumentation {
                 sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
             } else if(mode.equals("cache")) {
                 check(status().contains("보관한 사진"),"Cache restored after process restart");
+                check(!((java.util.List<?>)field("all")).isEmpty(),"Cached list contains posts");
+                android.view.View first=((androidx.recyclerview.widget.RecyclerView)activity.findViewById(R.id.posts)).getChildAt(0);
+                check(first instanceof ViewGroup && ((ImageView)((ViewGroup)first).getChildAt(0)).getDrawable()!=null,"Cached first image is displayed");
                 capture("offline-cache");
             } else {
                 runOnMainSync(()->activity.findViewById(R.id.sync).performClick());
                 waitSync();
-                check(status().contains("동기화 완료"),"Server synchronization: "+activity.lastError);
+                check(status().contains("동기화 완료"),"Server synchronization completed"+(activity.lastError.isEmpty()?"":": "+activity.lastError));
                 pause();capture(mode+"-synced");
-                if(mode.equals("local")) {
+                if(mode.equals("local") || mode.equals("localui")) {
+                    int originalCount=((java.util.List<?>)field("all")).size();
                     runOnMainSync(()->((EditText)activity.findViewById(R.id.search)).setText("첫 번째"));
+                    check(((java.util.List<?>)field("shown")).size()==1,"Title search returns only the matching seed post");
                     capture("search");
+                    runOnMainSync(()->((EditText)activity.findViewById(R.id.search)).setText("이미지 동기화 실습"));
+                    check(((java.util.List<?>)field("shown")).size()==1,"Body search returns the matching seed post");
+                    runOnMainSync(()->((EditText)activity.findViewById(R.id.search)).setText("no-match-retest-20261020"));
+                    check(((java.util.List<?>)field("shown")).isEmpty(),"Unmatched search returns an empty list");
                     runOnMainSync(()->((EditText)activity.findViewById(R.id.search)).setText(""));
+                    check(((java.util.List<?>)field("shown")).size()==originalCount,"Clearing search restores every downloaded post");
+                    pause();
                     runOnMainSync(()->((androidx.recyclerview.widget.RecyclerView)activity.findViewById(R.id.posts)).getChildAt(0).performClick());
-                    pause();capture("detail");sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+                    pause();
+                    check(visibleText("작성자"),"Photo detail displays author and post information");
+                    capture("detail");sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
                     runOnMainSync(()->activity.findViewById(R.id.settings).performClick());
                     pause();capture("settings");sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
                     runOnMainSync(()->activity.findViewById(R.id.upload).performClick());
                     pause();
-                    ContentValues values=new ContentValues();values.put(MediaStore.Images.Media.DISPLAY_NAME,"photoviewer-test.png");values.put(MediaStore.Images.Media.MIME_TYPE,"image/png");
+                    String photoName=mode.equals("localui")?"photoviewer-retest-"+System.currentTimeMillis()+".png":"photoviewer-test.png";
+                    ContentValues values=new ContentValues();values.put(MediaStore.Images.Media.DISPLAY_NAME,photoName);values.put(MediaStore.Images.Media.MIME_TYPE,"image/png");
                     Uri uri=context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);
                     try(InputStream in=getContext().getAssets().open("cat_what.png");OutputStream out=context.getContentResolver().openOutputStream(uri)) {in.transferTo(out);}
-                    // Inject the Android picker result; upload itself uses the production multipart path.
+                    if(mode.equals("localui")) {
+                        AlertDialog dialog=(AlertDialog)field("editor");
+                        View choose=findText(dialog.getWindow().getDecorView(),"사진 선택");
+                        check(choose!=null,"Upload UI contains a photo selection button");
+                        runOnMainSync(choose::performClick);
+                        pause();
+                        selectDocument(photoName);
+                        check(field("selectedImage")!=null,"System document picker returned a selected image URI");
+                    } else {
+                        // Legacy mode isolates multipart upload from the system picker.
+                        runOnMainSync(()->activity.onActivityResult(100,Activity.RESULT_OK,new Intent().setData(uri)));
+                    }
                     runOnMainSync(()->{
-                        activity.onActivityResult(100,Activity.RESULT_OK,new Intent().setData(uri));
                         try {
                             ((EditText)field("titleInput")).setText("Android에서 올린 고양이");
                             ((EditText)field("bodyInput")).setText("뭐여 고양이 사진을 선택하고 multipart POST로 업로드했습니다.");
@@ -79,12 +108,75 @@ public class EvidenceRunner extends Instrumentation {
                     runOnMainSync(()->{try{((AlertDialog)field("editor")).getButton(-1).performClick();}catch(Exception e){throw new RuntimeException(e);}});
                     waitSync();pause();
                     check(status().contains("동기화 완료"),"Multipart upload and refresh completed");
+                    check(((java.util.List<?>)field("all")).size()==originalCount+1,"Successful upload adds exactly one server post");
                     check(((EditText)field("titleInput")).getText().length()==0,"Upload cleared draft");
                     capture("upload-complete");
+                    context.getContentResolver().delete(uri,null,null);
                 }
             }
-            result.putString("stream","\nPASS: "+mode+" device integration and genuine screenshots\n");finish(Activity.RESULT_OK,result);
-        }catch(Throwable e){result.putString("stream","\nFAIL: "+e+"\n");finish(Activity.RESULT_CANCELED,result);}
+            result.putString("stream",checks+"\nPASS: "+mode+" device integration and genuine screenshots\n");finish(Activity.RESULT_OK,result);
+        }catch(Throwable e){result.putString("stream",checks+"\nFAIL: "+e+"\n");finish(Activity.RESULT_CANCELED,result);}
+    }
+    private View findText(View view,String value) {
+        if(view instanceof TextView && value.contentEquals(((TextView)view).getText()))return view;
+        if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++){
+            View found=findText(((ViewGroup)view).getChildAt(i),value);if(found!=null)return found;
+        }
+        return null;
+    }
+    private boolean visibleText(String text) {
+        long until=SystemClock.elapsedRealtime()+8000;
+        while(SystemClock.elapsedRealtime()<until){
+            android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();
+            if(root!=null && !root.findAccessibilityNodeInfosByText(text).isEmpty())return true;
+            SystemClock.sleep(200);
+        }
+        return false;
+    }
+    private void selectDocument(String name)throws Exception {
+        android.accessibilityservice.AccessibilityServiceInfo info=getUiAutomation().getServiceInfo();
+        info.flags|=android.accessibilityservice.AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;
+        getUiAutomation().setServiceInfo(info);
+        long until=SystemClock.elapsedRealtime()+30000;
+        boolean searched=false;
+        while(SystemClock.elapsedRealtime()<until){
+            android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();
+            if(root!=null && !searched) {
+                java.util.List<android.view.accessibility.AccessibilityNodeInfo> search=root.findAccessibilityNodeInfosByViewId("com.google.android.documentsui:id/option_menu_search");
+                if(!search.isEmpty()) {
+                    search.get(0).performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK);pause();
+                    android.view.accessibility.AccessibilityNodeInfo edit=findEditable(getUiAutomation().getRootInActiveWindow());
+                    if(edit!=null) {
+                        Bundle value=new Bundle();value.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,name);
+                        edit.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT,value);
+                        sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);pause();searched=true;continue;
+                    }
+                }
+            }
+            if(root!=null)for(android.view.accessibility.AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByText(name)){
+                CharSequence description=node.getContentDescription();
+                if(description==null || !description.toString().startsWith(name+","))continue;
+                capture("system-photo-picker");
+                // DocumentsUI exposes ACTION_CLICK on grid items even when isClickable() is false.
+                check(node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK),"System file tile accepted the selection action");
+                pause();
+                if(field("selectedImage")!=null)return;
+            }
+            SystemClock.sleep(300);
+        }
+        capture("picker-failure");
+        android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();
+        if(root!=null)try(FileWriter out=new FileWriter(new File(getTargetContext().getExternalFilesDir(null),"evidence/picker-tree.txt"))){dumpNode(root,out,0);}
+        throw new AssertionError("System document picker did not return "+name);
+    }
+    private android.view.accessibility.AccessibilityNodeInfo findEditable(android.view.accessibility.AccessibilityNodeInfo node) {
+        if(node==null)return null;if(node.isEditable())return node;
+        for(int i=0;i<node.getChildCount();i++){android.view.accessibility.AccessibilityNodeInfo found=findEditable(node.getChild(i));if(found!=null)return found;}
+        return null;
+    }
+    private void dumpNode(android.view.accessibility.AccessibilityNodeInfo node,Writer out,int depth)throws IOException {
+        out.write(" ".repeat(depth)+node.toString()+"\n");
+        for(int i=0;i<node.getChildCount();i++){android.view.accessibility.AccessibilityNodeInfo child=node.getChild(i);if(child!=null)dumpNode(child,out,depth+1);}
     }
     private EditText input(AlertDialog dialog,String hint) {
         return findInput(dialog.getWindow().getDecorView(),hint);
@@ -170,9 +262,9 @@ public class EvidenceRunner extends Instrumentation {
     }
     private Object field(String name)throws Exception {Field f=MainActivity.class.getDeclaredField(name);f.setAccessible(true);return f.get(activity);}
     private String status(){return ((TextView)activity.findViewById(R.id.status)).getText().toString();}
-    private void check(boolean condition,String message){if(!condition)throw new AssertionError(message);}
+    private void check(boolean condition,String message){if(!condition)throw new AssertionError(message);checks.append("PASS: ").append(message).append('\n');}
     private void pause(){waitForIdleSync();SystemClock.sleep(1800);}
-    private void waitSync(){long until=SystemClock.elapsedRealtime()+45000;while(!activity.idle && SystemClock.elapsedRealtime()<until)SystemClock.sleep(100);waitForIdleSync();check(activity.idle,"Network request timed out");}
+    private void waitSync(){long until=SystemClock.elapsedRealtime()+45000;while(!activity.idle && SystemClock.elapsedRealtime()<until)SystemClock.sleep(100);waitForIdleSync();check(activity.idle,"Network operation finished within 45 seconds");}
     private void capture(String name)throws Exception {
         waitForIdleSync();SystemClock.sleep(500);
         File folder=new File(getTargetContext().getExternalFilesDir(null),"evidence");folder.mkdirs();

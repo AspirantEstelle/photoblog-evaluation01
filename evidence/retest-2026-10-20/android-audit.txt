@@ -1,0 +1,14 @@
+PASS: Cloud token loaded instead of local token
+PASS: Unknown server does not receive another server's token
+PASS: Local token restored
+PASS: Token can be cleared
+PASS: Cloud token unchanged
+PASS: Activity recreated
+PASS: Draft title survived recreation
+PASS: Draft body survived recreation
+PASS: Multipart request reached delayed test server
+PASS: Activity recreated
+PASS: Late upload completion did not crash the recreated activity
+
+PASS: audit device integration and genuine screenshots
+

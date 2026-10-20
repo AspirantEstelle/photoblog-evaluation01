@@ -1,0 +1,7 @@
+PASS: Fresh start presents the synchronization instruction
+PASS: Fresh start has no downloaded posts
+PASS: Network operation finished within 45 seconds
+PASS: Server synchronization completed
+
+PASS: fresh device integration and genuine screenshots
+

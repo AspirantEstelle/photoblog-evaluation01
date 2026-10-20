@@ -1,0 +1,50 @@
+[
+  {
+    "check": "HTTP 200: http://127.0.0.1:8000/api_root/Post/",
+    "passed": true
+  },
+  {
+    "check": "Fresh database contains seed, browser API post and Android UI post",
+    "passed": true
+  },
+  {
+    "check": "Exactly one post: API 재검증 2026-10-20",
+    "passed": true
+  },
+  {
+    "check": "HTTP 200: http://127.0.0.1:8000/media/images/2026/10/20/cat_annoyed_MCC4P9e.png",
+    "passed": true
+  },
+  {
+    "check": "Uploaded image bytes match cat_annoyed.png",
+    "passed": true
+  },
+  {
+    "check": "HTTP 200: http://127.0.0.1:8000/post/2/",
+    "passed": true
+  },
+  {
+    "check": "Web detail shows matching title and content: API 재검증 2026-10-20",
+    "passed": true
+  },
+  {
+    "check": "Exactly one post: Android에서 올린 고양이",
+    "passed": true
+  },
+  {
+    "check": "HTTP 200: http://127.0.0.1:8000/media/images/2026/10/20/upload.png",
+    "passed": true
+  },
+  {
+    "check": "Uploaded image bytes match cat_what.png",
+    "passed": true
+  },
+  {
+    "check": "HTTP 200: http://127.0.0.1:8000/post/3/",
+    "passed": true
+  },
+  {
+    "check": "Web detail shows matching title and content: Android에서 올린 고양이",
+    "passed": true
+  }
+]

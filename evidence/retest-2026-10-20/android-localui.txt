@@ -1,0 +1,18 @@
+PASS: Network operation finished within 45 seconds
+PASS: Server synchronization completed
+PASS: Title search returns only the matching seed post
+PASS: Body search returns the matching seed post
+PASS: Unmatched search returns an empty list
+PASS: Clearing search restores every downloaded post
+PASS: Photo detail displays author and post information
+PASS: Upload UI contains a photo selection button
+PASS: System file tile accepted the selection action
+PASS: System document picker returned a selected image URI
+PASS: Draft restored
+PASS: Network operation finished within 45 seconds
+PASS: Multipart upload and refresh completed
+PASS: Successful upload adds exactly one server post
+PASS: Upload cleared draft
+
+PASS: localui device integration and genuine screenshots
+

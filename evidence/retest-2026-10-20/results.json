@@ -1,0 +1,131 @@
+{
+  "tested_at": "2026-10-20T15:11:16.946067+09:00",
+  "environment": "Fresh Django database; Android Medium Phone API 36; deployed PythonAnywhere HTTPS",
+  "items": [
+    {
+      "number": 1,
+      "criterion": "포토 블로그 API",
+      "passed": true,
+      "evidence": [
+        "01-api-form.jpg",
+        "01-api-created.jpg",
+        "01-api-post-page.jpg"
+      ]
+    },
+    {
+      "number": 2,
+      "criterion": "API 검증(2/3): 원시 HTTP 요청·응답",
+      "passed": true,
+      "evidence": [
+        "02-raw-http-request.txt",
+        "02-raw-http-response.txt"
+      ]
+    },
+    {
+      "number": 3,
+      "criterion": "API 검증(3/3): CodeBeautify JSON 트리",
+      "passed": true,
+      "evidence": [
+        "03-json-tree.jpg",
+        "03-json-tree-context.jpg",
+        "03-json-tree-accessibility.txt",
+        "api-response.json"
+      ]
+    },
+    {
+      "number": 4,
+      "criterion": "Server API 자동 테스트",
+      "passed": true,
+      "evidence": [
+        "server-tests.txt",
+        "coverage.txt",
+        "coverage_html/index.html"
+      ]
+    },
+    {
+      "number": 5,
+      "criterion": "Server/Client 연동: 서버 브라우저",
+      "passed": true,
+      "evidence": [
+        "05-server-browser.jpg",
+        "08-upload-server-verification.json"
+      ]
+    },
+    {
+      "number": 6,
+      "criterion": "Client 시작 화면",
+      "passed": true,
+      "evidence": [
+        "android/fresh-initial.png",
+        "android-fresh.txt"
+      ]
+    },
+    {
+      "number": 7,
+      "criterion": "Client 동기화 완료",
+      "passed": true,
+      "evidence": [
+        "android/fresh-synced.png",
+        "android-fresh.txt"
+      ]
+    },
+    {
+      "number": 8,
+      "criterion": "MainActivity Upload: 제목·본문·사진 선택 UI(상)",
+      "passed": true,
+      "evidence": [
+        "android/system-photo-picker.png",
+        "android/upload-form.png",
+        "android/upload-complete.png",
+        "android-localui.txt",
+        "08-upload-server-verification.json"
+      ]
+    },
+    {
+      "number": 9,
+      "criterion": "PythonAnywhere 클라우드 동작",
+      "passed": true,
+      "evidence": [
+        "09-cloud-browser.jpg",
+        "android/cloud-synced.png",
+        "android-cloud.txt",
+        "09-cloud-public.txt"
+      ]
+    },
+    {
+      "number": 10,
+      "criterion": "추가 편의 기능 5개",
+      "passed": true,
+      "evidence": [
+        "android/settings.png",
+        "android/search.png",
+        "android/detail.png",
+        "android/offline-cache.png",
+        "android/draft-restored.png",
+        "android-localui.txt",
+        "android-cache.txt",
+        "android-audit.txt"
+      ]
+    }
+  ],
+  "additional_features": [
+    "서버별 연결 설정 저장",
+    "제목·본문 검색",
+    "사진 상세 보기",
+    "오프라인 목록·이미지 복원",
+    "작성 초안 복원"
+  ],
+  "coverage_scope": "blog: 109 statements and 14 branches; tests, migrations, management commands and Android excluded",
+  "android_lint": {
+    "errors": 0,
+    "warnings": 18
+  },
+  "raw_http_client": "curl telnet://127.0.0.1:8000 --upload-file 02-raw-http-request.txt",
+  "test_notes": [
+    "System picker automation initially selected the preview icon; it now searches the exact filename and invokes ACTION_CLICK on the matching photo tile.",
+    "Emulator restart and dismissal of an Android System UI not responding dialog were required. Final device logs and screenshots come from completed runs.",
+    "The JSON tree object screenshot is a direct browser crop; its uncropped context and accessibility tree are also included.",
+    "The delayed-response rotation check uses a local test peer; the UI upload check uses the real Django server.",
+    "The Word report retains the agreed original-table-plus-screenshots layout; report-integrity.json verifies 20 embedded pictures."
+  ]
+}
